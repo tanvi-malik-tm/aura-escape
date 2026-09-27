@@ -432,8 +432,11 @@ export function chooseEscape(
   seed = 0,
   story = '',
   date = new Date().toISOString().slice(0, 10),
+  location = '',
 ) {
   const selectedDate = date || new Date().toISOString().slice(0, 10);
+  const startingPlace = location.toLowerCase();
+  const jakartaStart = /(jakarta|indonesia|bogor|sentul|bandung|puncak|yogyakarta|pelabuhan ratu|thousand islands)/.test(startingPlace);
   const words = story.toLowerCase();
   const inferred = [
     /(quiet|peace|calm|rest|tired|exhaust)/.test(words) && 'Nature',
@@ -455,7 +458,12 @@ export function chooseEscape(
     /(romance|romantic|date night)/.test(words) && 'Romance',
   ].filter(Boolean) as string[];
   const allWants = [...new Set([...wants, ...inferred])];
-  const candidates = escapes.filter((escape) => escape.size === size && (!escape.event || (selectedDate >= escape.event.from && selectedDate <= escape.event.to)));
+  const candidates = escapes.filter((escape) => {
+    const matchesSize = escape.size === size;
+    const matchesDate = !escape.event || (selectedDate >= escape.event.from && selectedDate <= escape.event.to);
+    const matchesStart = !jakartaStart || /(Jakarta|Indonesia|West Java|Bandung|Bogor|Puncak|Sentul|Yogyakarta|Pelabuhan Ratu|Thousand Islands)/i.test(escape.destination);
+    return matchesSize && matchesDate && matchesStart;
+  });
   // A budget is a ceiling, never a preference. If Aura cannot make a complete
   // plan within it, the caller can ask the person to change the brief instead
   // of quietly returning something more expensive.
