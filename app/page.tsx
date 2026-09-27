@@ -275,7 +275,7 @@ export default function Home() {
     const chosenSize = refinement?.size ?? (result?.size ?? initialSize);
     const refinedWants = [...new Set([...selectedWants, ...(refinement?.wants ?? [])])];
     const refinedBudget = budget ? Math.floor(Number(budget) * (refinement?.budgetMultiplier ?? 1)) : 0;
-    const plan = chooseEscape(chosenSize, mood.name, refinedWants, refinedBudget, nextShuffle, story, date);
+    const plan = chooseEscape(chosenSize, mood.name, refinedWants, refinedBudget, nextShuffle, story, date, location);
     if (!plan) {
       const cap = `${currency.symbol}${refinedBudget.toLocaleString()} ${currency.code}`;
       setToast(`Aura can’t make a complete ${chosenSize === 'day' ? 'day' : chosenSize === 'weekend' ? 'weekend' : 'longer'} escape within ${cap}. Try a smaller escape or raise the cap.`);
@@ -384,7 +384,7 @@ export default function Home() {
         const index = moods.findIndex((item) => item.name === input.mood);
         if (index < 0 || !input.story?.trim() || !input.location?.trim() || !input.escapeSize) throw new Error('A valid mood, story, escape size and location are required.');
         const preferences = (input.wants ?? []).filter((item) => wants.includes(item));
-        const plan = chooseEscape(input.escapeSize, moods[index].name, preferences, input.budget ?? 0, 0, input.story);
+        const plan = chooseEscape(input.escapeSize, moods[index].name, preferences, input.budget ?? 0, 0, input.story, undefined, input.location);
         if (!plan) throw new Error('No complete escape in Aura’s catalogue fits that budget cap. Try a smaller escape or increase the budget.');
         setMoodIndex(index); setStory(input.story); setSize(input.escapeSize); setLocation(input.location); setBudget(input.budget ? String(input.budget) : ''); setSelectedWants(preferences); setFastPath(false); setResult(plan); setStep(4); setWeatherNote('');
         void fetch('/api/mood', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mood: moods[index].name }) });
