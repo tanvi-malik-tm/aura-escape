@@ -359,6 +359,42 @@ export const escapes: Escape[] = [
     ],
   },
   {
+    id: 'bali-seminyak-weekend', size: 'weekend', destination: 'Seminyak, Bali',
+    title: 'A brighter island weekend', moods: ['Celebratory', 'Playful', 'Sociable', 'Confident', 'Energised'],
+    wants: ['Water views', 'Social energy', 'A good drink', 'Nightlife', 'A little luxury'], price: 980, duration: '3 days, 2 nights', travel: 'A short flight',
+    why: 'This is Bali when you want movement and people: a beach afternoon, a polished dinner and enough nightlife to feel properly away.',
+    stops: [
+      { time: 'Day 1 · 18:00', title: 'Sunset at La Lucciola', detail: 'Start with the sea in view and let the first evening feel celebratory.', search: 'La Lucciola Seminyak sunset dinner', kind: 'Restaurant', emoji: '🌅' },
+      { time: 'Day 2 · 10:00', title: 'Beach club at Potato Head', detail: 'Claim a daybed, swim, and let the music do the scheduling.', search: 'Potato Head Beach Club Bali', kind: 'Activity', emoji: '🏝️' },
+      { time: 'Day 2 · 17:30', title: 'Coffee at Revolver Espresso', detail: 'A proper coffee before the evening changes gear.', search: 'Revolver Espresso Seminyak', kind: 'Café', emoji: '☕' },
+      { time: 'Day 2 · 21:00', title: 'Drinks at Motel Mexicola', detail: 'A bright, social room for dancing, cocktails, and an easy late night.', search: 'Motel Mexicola Bali', kind: 'Bar', emoji: '🍹' },
+    ],
+  },
+  {
+    id: 'kota-kinabalu-weekend', size: 'weekend', destination: 'Kota Kinabalu, Malaysia',
+    title: 'Island water, mountain air', moods: ['Adventurous', 'Restless', 'Curious', 'Cabin fever', 'Energised'],
+    wants: ['Nature', 'Water views', 'Good food', 'Beautiful views', 'A surprise'], price: 820, duration: '3 days, 2 nights', travel: 'A short flight',
+    why: 'Kota Kinabalu makes a compact adventure feel possible: island water in the morning, a sunset market at night, and mountain air between them.',
+    stops: [
+      { time: 'Day 1 · 18:00', title: 'Sunset at Tanjung Aru Beach', detail: 'Arrive, find a patch of sand, and let the horizon reset the weekend.', search: 'Tanjung Aru Beach sunset Kota Kinabalu', kind: 'Activity', emoji: '🌅' },
+      { time: 'Day 1 · 20:00', title: 'Dinner at Welcome Seafood', detail: 'Keep the first night casual with a seafood spread and local energy.', search: 'Welcome Seafood Restaurant Kota Kinabalu', kind: 'Restaurant', emoji: '🦐' },
+      { time: 'Day 2 · 08:00', title: 'Tunku Abdul Rahman island hop', detail: 'Choose one or two islands for clear water, snorkelling and a slower pace.', search: 'Tunku Abdul Rahman Marine Park island hopping', kind: 'Activity', emoji: '🐠' },
+      { time: 'Day 2 · 18:30', title: 'Drinks at The Shamrock Irish Bar', detail: 'A friendly waterfront room for a final drink before the night market.', search: 'The Shamrock Irish Bar Kota Kinabalu', kind: 'Bar', emoji: '🍺' },
+    ],
+  },
+  {
+    id: 'belitung-weekend', size: 'weekend', destination: 'Belitung, Indonesia',
+    title: 'Clear water, quiet coves', moods: ['Drained', 'Stressed', 'Low & heavy', 'Content', 'Romantic'],
+    wants: ['Water views', 'Nature', 'Beautiful views', 'A little luxury', 'Good food'], price: 780, duration: '3 days, 2 nights', travel: 'A short flight',
+    why: 'Belitung is a clean break from city rhythm: granite beaches, boat days and long quiet stretches where the only decision is whether to swim.',
+    stops: [
+      { time: 'Day 1 · 17:00', title: 'Tanjung Tinggi Beach', detail: 'Arrive for the late light and a first swim between the granite rocks.', search: 'Tanjung Tinggi Beach Belitung sunset', kind: 'Activity', emoji: '🏝️' },
+      { time: 'Day 1 · 19:30', title: 'Dinner at Dapoer Belitong', detail: 'Try local dishes and keep the first night easy.', search: 'Dapoer Belitong restaurant', kind: 'Restaurant', emoji: '🍛' },
+      { time: 'Day 2 · 08:00', title: 'Island-hopping boat day', detail: 'Visit Lengkuas lighthouse and the smaller coves while the water is calm.', search: 'Belitung island hopping Lengkuas lighthouse', kind: 'Activity', emoji: '⛵' },
+      { time: 'Day 2 · 18:00', title: 'Coffee at Kong Djie Coffee', detail: 'A local coffee ritual before one last quiet walk by the sea.', search: 'Kong Djie Coffee Belitung', kind: 'Café', emoji: '☕' },
+    ],
+  },
+  {
     id: 'siem-reap-weekend', size: 'weekend', destination: 'Siem Reap, Cambodia',
     title: 'Ancient light, easy evenings', moods: ['Curious', 'Inspired', 'Disconnected', 'Reflective', 'Homesick'],
     wants: ['Culture', 'Beautiful views', 'Good food', 'A surprise'], price: 760, duration: '3 days, 2 nights', travel: 'A short flight',
