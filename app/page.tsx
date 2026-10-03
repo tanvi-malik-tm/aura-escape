@@ -106,6 +106,24 @@ function currencyFor(location: string) {
   return { symbol: '$', code: 'USD' };
 }
 
+const currencyOptions = [
+  { symbol: 'S$', code: 'SGD', label: 'Singapore dollars' },
+  { symbol: '$', code: 'USD', label: 'US dollars' },
+  { symbol: 'Rp', code: 'IDR', label: 'Indonesian rupiah' },
+] as const;
+
+function currencyByCode(code: string) {
+  return currencyOptions.find((option) => option.code === code) ?? currencyOptions[0];
+}
+
+function displayPrice(plan: Escape, currencyCode: string) {
+  const sourceIsIdr = plan.id.startsWith('jakarta-');
+  const sourceSgd = sourceIsIdr ? plan.price / 12800 : plan.price;
+  if (currencyCode === 'IDR') return Math.round(sourceSgd * 12800).toLocaleString();
+  if (currencyCode === 'USD') return Math.round(sourceSgd * 0.74).toLocaleString();
+  return Math.round(sourceSgd).toLocaleString();
+}
+
 const searchUrl = (query: string) => `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 
 function refinementsForMood(mood: string, size: EscapeSize, hasBudget: boolean): Refinement[] {
@@ -161,6 +179,7 @@ export default function Home() {
   const [size, setSize] = useState<EscapeSize>('day');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('Singapore');
+  const [currencyCode, setCurrencyCode] = useState('SGD');
   const [budget, setBudget] = useState('');
   const [distance, setDistance] = useState('');
   const [companions, setCompanions] = useState('Solo');
@@ -179,7 +198,7 @@ export default function Home() {
   const soundSessionRef = useRef(0);
   const mood = moods[moodIndex];
   const currentTrack = trackForMood(mood.name);
-  const currency = currencyFor(location);
+  const currency = currencyByCode(currencyCode);
   const progress = result ? 4 : fastPath ? Math.min(step, 2) : step;
   const distanceOptions = useMemo(() => size === 'day' ? ['Keep it close', 'Across the city', 'Surprise me'] : size === 'weekend' ? ['A short hop', 'A short flight', 'Road-trip radius'] : ['Within Asia', 'Up to 8 hours', 'Anywhere'], [size]);
 
@@ -271,14 +290,13 @@ export default function Home() {
 
   function generate(nextShuffle = shuffle, refinement?: Refinement) {
     const storyAsksForWeekend = /(weekend|overnight|two days|couple of days)/i.test(story);
-    const initialSize: EscapeSize = fastPath ? (storyAsksForWeekend || Number(budget || 0) >= 250 ? 'weekend' : 'day') : size;
+    const initialSize: EscapeSize = fastPath ? (storyAsksForWeekend ? 'weekend' : 'day') : size;
     const chosenSize = refinement?.size ?? (result?.size ?? initialSize);
     const refinedWants = [...new Set([...selectedWants, ...(refinement?.wants ?? [])])];
     const refinedBudget = budget ? Math.floor(Number(budget) * (refinement?.budgetMultiplier ?? 1)) : 0;
     const plan = chooseEscape(chosenSize, mood.name, refinedWants, refinedBudget, nextShuffle, story, date, location);
     if (!plan) {
-      const cap = `${currency.symbol}${refinedBudget.toLocaleString()} ${currency.code}`;
-      setToast(`Aura can’t make a complete ${chosenSize === 'day' ? 'day' : chosenSize === 'weekend' ? 'weekend' : 'longer'} escape within ${cap}. Try a smaller escape or raise the cap.`);
+      setToast(`Aura couldn’t find a matching ${chosenSize === 'day' ? 'day' : chosenSize === 'weekend' ? 'weekend' : 'longer'} escape yet. Try another escape size or refine the mood.`);
       setTimeout(() => setToast(''), 4600);
       return;
     }
@@ -293,7 +311,7 @@ export default function Home() {
 
   async function share() {
     if (!result) return;
-    const text = itineraryText(result, mood.name, `${currency.symbol}${result.price} ${currency.code}`);
+    const text = itineraryText(result, mood.name, `${currency.symbol}${displayPrice(result, currency.code)} ${currency.code}`);
     if (navigator.share) {
       try { await navigator.share({ title: `Aura — ${result.title}`, text }); return; } catch { /* use copy fallback */ }
     }
@@ -302,7 +320,7 @@ export default function Home() {
 
   function shareToTelegram() {
     if (!result) return;
-    const text = itineraryText(result, mood.name, `${currency.symbol}${result.price} ${currency.code}`);
+    const text = itineraryText(result, mood.name, `${currency.symbol}${displayPrice(result, currency.code)} ${currency.code}`);
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
     window.open(shareUrl, '_blank', 'noopener,noreferrer');
   }
@@ -385,7 +403,7 @@ export default function Home() {
         if (index < 0 || !input.story?.trim() || !input.location?.trim() || !input.escapeSize) throw new Error('A valid mood, story, escape size and location are required.');
         const preferences = (input.wants ?? []).filter((item) => wants.includes(item));
         const plan = chooseEscape(input.escapeSize, moods[index].name, preferences, input.budget ?? 0, 0, input.story, undefined, input.location);
-        if (!plan) throw new Error('No complete escape in Aura’s catalogue fits that budget cap. Try a smaller escape or increase the budget.');
+        if (!plan) throw new Error('No matching escape in Aura’s catalogue. Try another escape size or refine the mood.');
         setMoodIndex(index); setStory(input.story); setSize(input.escapeSize); setLocation(input.location); setBudget(input.budget ? String(input.budget) : ''); setSelectedWants(preferences); setFastPath(false); setResult(plan); setStep(4); setWeatherNote('');
         void fetch('/api/mood', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mood: moods[index].name }) });
         return { title: plan.title, destination: plan.destination, duration: plan.duration, estimatedSpend: plan.price };
@@ -428,7 +446,8 @@ export default function Home() {
             {step === 2 && <div className="screen practical-screen"><p className="eyebrow">A few practical things</p><h1>{fastPath ? 'Give Aura just enough' : 'Let’s make it feel easy'}</h1><div className="form-grid">
               {!fastPath && size !== 'day' && <label className="field"><span><CalendarDays size={14} /> Pick a date</span><input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={(event) => setDate(event.target.value)} /></label>}
               <label className="field"><span>Starting point</span><div className="input-action"><input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="City or neighbourhood" /><button onClick={detectLocation} type="button"><LocateFixed size={15} /> Use mine</button></div></label>
-              <label className="field"><span>Budget cap <small>({currency.code} · never exceeded)</small></span><div className="money-input"><b>{currency.symbol}</b><input type="number" min="0" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder={fastPath ? '250' : size === 'global' ? '1800' : size === 'weekend' ? '450' : '80'} /></div></label>
+              <label className="field"><span>Currency</span><select value={currency.code} onChange={(event) => setCurrencyCode(event.target.value)}>{currencyOptions.map((option) => <option key={option.code} value={option.code}>{option.label} ({option.code})</option>)}</select></label>
+              <label className="field"><span>Budget guide <small>({currency.code} · flexible)</small></span><div className="money-input"><b>{currency.symbol}</b><input type="number" min="0" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder={fastPath ? '250' : size === 'global' ? '1800' : size === 'weekend' ? '450' : '80'} /></div></label>
               {!fastPath && <><fieldset><legend>How far are you happy to travel?</legend><div className="pill-row">{distanceOptions.map((option) => <button type="button" key={option} className={distance === option ? 'pill selected' : 'pill'} onClick={() => setDistance(option)}>{option}{distance === option && <Check size={13} />}</button>)}</div></fieldset><fieldset><legend>Who’s coming?</legend><div className="pill-row">{['Solo', 'A friend', 'My partner', 'Family'].map((option) => <button type="button" key={option} className={companions === option ? 'pill selected' : 'pill'} onClick={() => setCompanions(option)}>{option}{companions === option && <Check size={13} />}</button>)}</div></fieldset></>}
             </div><button className="primary-button" disabled={!location.trim()} onClick={() => fastPath ? generate() : setStep(3)}>{fastPath ? 'Find my escape' : 'One last thing'} <ArrowRight size={17} /></button>{fastPath && <p className="fast-note">Aura assumes solo and chooses a day or weekend escape. Global trips only appear in the full flow.</p>}</div>}
 
@@ -440,8 +459,8 @@ export default function Home() {
           <div className="result-meta"><span>Your escape</span><span>{result.duration}</span></div><h1><span className="result-destination">{result.destination}</span><span className="result-title">{result.title}</span></h1>
           <p className="why"><Sparkles size={15} /><span><strong>Why it fits your mood</strong>{result.why}</span></p>{weatherNote && <p className="weather-note">{weatherNote}</p>}
           {result.event && <p className="event-banner"><span>LIVE NOW</span>{result.event.label}</p>}<div className="itinerary">{result.stops.map((stop, index) => <div className="stop" key={`${stop.time}-${stop.title}`}><div className="stop-rail"><span className="stop-emoji" aria-hidden="true">{stopEmoji(stop)}</span><time>{stop.time}</time></div><div>{stop.kind && <small className="venue-kind">{stop.kind} · Stop {index + 1}</small>}<h3>{stop.title}</h3><p>{stop.detail}</p></div><a href={searchUrl(stop.search)} target="_blank" rel="noreferrer">Check details ↗</a></div>)}</div>
-          <div className="estimate"><span>Estimated spend</span><strong>{currency.symbol}{result.price} <small>{currency.code}</small></strong><p>This itinerary stays within your stated cap. Prices can still change, so check each stop before you go.</p></div>
-          <section className="refine-panel" aria-label="Refine this plan"><div><span>Refine this plan</span><p>Choose one direction and Aura will reshape the escape.</p></div><div className="refine-choices">{refinementsForMood(mood.name, result.size, Boolean(budget)).map((refinement) => <button key={refinement.label} type="button" onClick={() => generate(shuffle + 1, refinement)}>{refinement.label}<ArrowRight size={14} /></button>)}</div></section><div className="result-actions"><button className="primary-button" onClick={share}><Share2 size={16} /> Share this escape</button><button className="secondary-button telegram-button" onClick={shareToTelegram}><Send size={15} /> Send on Telegram</button><button className="secondary-button" onClick={async () => { await navigator.clipboard.writeText(itineraryText(result, mood.name, `${currency.symbol}${result.price} ${currency.code}`)); setToast('Itinerary copied.'); setTimeout(() => setToast(''), 2200); }}><Copy size={15} /> Copy text</button></div>
+          <div className="estimate"><span>Estimated spend</span><strong>{currency.symbol}{displayPrice(result, currency.code)} <small>{currency.code}</small></strong><p>Your budget is a guide, not a hard limit. Prices can change, so check each stop before you go.</p></div>
+          <section className="refine-panel" aria-label="Refine this plan"><div><span>Refine this plan</span><p>Choose one direction and Aura will reshape the escape.</p></div><div className="refine-choices">{refinementsForMood(mood.name, result.size, Boolean(budget)).map((refinement) => <button key={refinement.label} type="button" onClick={() => generate(shuffle + 1, refinement)}>{refinement.label}<ArrowRight size={14} /></button>)}</div></section><div className="result-actions"><button className="primary-button" onClick={share}><Share2 size={16} /> Share this escape</button><button className="secondary-button telegram-button" onClick={shareToTelegram}><Send size={15} /> Send on Telegram</button><button className="secondary-button" onClick={async () => { await navigator.clipboard.writeText(itineraryText(result, mood.name, `${currency.symbol}${displayPrice(result, currency.code)} ${currency.code}`)); setToast('Itinerary copied.'); setTimeout(() => setToast(''), 2200); }}><Copy size={15} /> Copy text</button></div>
         </div></article>}
       </section>
 
